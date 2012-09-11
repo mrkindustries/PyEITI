@@ -1,15 +1,20 @@
 from crc_16 import crc16
 from matplotlib.pylab import *
+matplotlib.use('TkAgg')
+
 from time import sleep
-from Tkinter import *
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 
 import time
 import array
 import serial
 import struct
-import matplotlib.pyplot as plt
+import Tkinter as Tk
+#import matplotlib.pyplot as plt
 import threading
 import csv
+
+
 
 #This laptop address in the MODBUS bus
 PC_STATION = 4
@@ -200,24 +205,27 @@ class TemperatureControllerClass(threading.Thread):
 def destroy(e): sys.exit()
 
 
-t = TemperatureControllerClass()
-t.start()
+#t = TemperatureControllerClass()
+#t.start()
 
 
-#root = Tk()
-#root.wm_title("EITI")
+root = Tk.Tk()
+root.wm_title("EITI")
+root.minsize(300,300)
+root.geometry("700x500")
+root.geometry("+300+100")
 
+L1 = Tk.Label(root, text="TX current")
+L1.pack( side = Tk.RIGHT)
+E1 = Tk.Entry(root, background = 'white')
+E1.pack(side = Tk.RIGHT)
 
-#canvas = FigureCanvasTkAgg(plt, master=root)
-#canvas.show()
-#canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-#canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-#L1 = Label(top, text="TX current")
-#L1.pack( side = LEFT)
-#E1 = Entry(top, background = 'white')
-#E1.pack(side = RIGHT)
+f = Figure(figsize=(30,30), dpi=80)
+temperature_plt = f.add_subplot(211)
+canvas = FigureCanvasTkAgg(f, master=root)
+canvas.show()
+canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
-#root.mainloop()
 
 table = ['RTD temperature',
 	  'TCPL temperature',
@@ -236,28 +244,31 @@ TCPL_temperature = 0 * x
 current_loop_RX  = 0 * x
 current_loop_TX  = 0 * x
 
-plt.figure().patch.set_facecolor('white')
+#plt.figure().patch.set_facecolor('white')
 
-plt.subplot(211)
-plt.title('EITI interfaces')
-plt.xlabel('Time [sec]')
-plt.ylabel('Temperature [C]')
-RTD_line,TCPL_line, = plt.plot(x, RTD_temperature, 'r', x, TCPL_temperature, 'b')
-plt.legend( (RTD_line,TCPL_line), ("RTD","TCPL") )          
+#plt.subplot(211)
+f.patch.set_facecolor('white')
+temperature_plt.set_title('EITI interfaces')
+temperature_plt.set_xlabel('Time [sec]')
+temperature_plt.set_ylabel('Temperature [C]')
+RTD_line,TCPL_line, = temperature_plt.plot(x, RTD_temperature, 'r,', x, TCPL_temperature, 'b,')	#the comma is the linestyle
+temperature_plt.legend( (RTD_line,TCPL_line), ("RTD","TCPL") )          
 RTD_line.axes.set_ylim(-50,50)
 RTD_line.set_antialiased(True)
 TCPL_line.set_antialiased(True)
 
 
-plt.subplot(212)
-plt.xlabel('Time [sec]')
-plt.ylabel('Current [mA]')
-RX_line,TX_line, = plt.plot(x, current_loop_RX, 'r', x, current_loop_TX, 'b')
-plt.legend( (RX_line,TX_line), ("RX","TX") )          
+current_plot = f.add_subplot(212)
+current_plot.set_xlabel('Time [sec]')
+current_plot.set_ylabel('Current [mA]')
+RX_line,TX_line, = current_plot.plot(x, current_loop_RX, 'r,', x, current_loop_TX, 'b,')
+current_plot.legend( (RX_line,TX_line), ("RX","TX") )          
 RX_line.axes.set_ylim(-1,24)
 RX_line.set_antialiased(True)
 TX_line.set_antialiased(True)
 
+
+root.mainloop()
 
 for i in range(1,20):
 	sleep (0.5)
@@ -282,6 +293,5 @@ for i in range(1,20):
 	
 	table = [ RTD_temperature[i], TCPL_temperature[i], current_loop_RX[i], current_loop_TX[i], EITI_status]
 	writer.writerow(table)
-plt.close()
-t.exit()
+#t.exit()
 exit()
