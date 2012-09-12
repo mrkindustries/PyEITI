@@ -213,34 +213,36 @@ t.start()
 root = Tk.Tk()
 root.wm_title("EITI")
 root.minsize(300,300)
-root.geometry("700x500")
+root.geometry("750x500")
 root.geometry("+300+100")
 
 TX_current = StringVar()
 TX_current.set("4.0")
-L1 = Tk.Label(root, text="TX current")
-L1.pack( side = Tk.RIGHT)
+L1 = Tk.Label(root, text="TX current (mA)", justify=LEFT, font=("DejaVu Sans", 9))
+L1.grid( row = 0, column = 4)
 TX_current_entry = Tk.Entry(root, textvariable = TX_current, background = 'white')
-TX_current_entry.pack(side = Tk.RIGHT)
+TX_current_entry.grid( row = 0, column = 5)
 
+L2 = Tk.Label(root, text="TCPL temperature:", font=("DejaVu Sans", 9))
+L2.grid( row = 1, column = 4)
 TCPL_label = StringVar()
 TCPL_label.set("N/A")
-
 TCPL_label_frame = Label( root, textvariable=TCPL_label)
-TCPL_label_frame.pack(side = Tk.RIGHT)
+TCPL_label_frame.grid( row = 1, column = 5)
 
+L2 = Tk.Label(root, text="RTD temperature:", font=("DejaVu Sans", 9))
+L2.grid( row = 2, column = 4)
 RTD_label = StringVar()
 RTD_label.set("N/A")
-
 RTD_label_frame = Label( root, textvariable=RTD_label)
-RTD_label_frame.pack(side = Tk.RIGHT)
+RTD_label_frame.grid( row = 2, column = 5)
 
 
-f = Figure(figsize=(30,30), dpi=80)
+f = Figure(figsize=(6,6), dpi=80)
 temperature_plt = f.add_subplot(211)
 canvas = FigureCanvasTkAgg(f, master=root)
 canvas.show()
-canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+canvas.get_tk_widget().grid(row=0, column=2, columnspan=2, rowspan=10, sticky=W+E+N+S)
 
 
 table = ['RTD temperature',
@@ -255,10 +257,10 @@ writer.writerow(table)
 #prepare plot
 ion()                     # turn off interactive mode
 x = arange(0,300,0.5)     # x axis will go from 0 to 300
-RTD_temperature  = 0 * x
-TCPL_temperature = 0 * x
-current_loop_RX  = 0 * x
-current_loop_TX  = 0 * x
+RTD_temperature  = -10000 * x
+TCPL_temperature = -10000 * x
+current_loop_RX  = -10000 * x
+current_loop_TX  = -10000 * x
 
 f.patch.set_facecolor('white')
 temperature_plt.set_title('EITI interfaces')
