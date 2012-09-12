@@ -1,0 +1,6 @@
+This is a small piece of software designed to ease the usage and development of the EITI board.
+
+PyEITI reads the serial port and communicates with the board, displaying the measured data.
+
+More details about EITI:
+mrkindustries.com.ar/en/EITI.html
