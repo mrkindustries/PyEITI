@@ -17,7 +17,6 @@ import threading
 import csv
 
 
-
 #This laptop address in the MODBUS bus
 PC_STATION = 4
 
@@ -27,7 +26,7 @@ FUNCTION_READ_INPUT_REGISTER = 4
 
 # Internal memory, jusy like a PLC
 memory = [0] * 25000
-time = 1
+i = 1
 #EITI stuff
 PLC_REG_RTD = 0x0540
 PLC_REG_TCPL = 0x0541
@@ -159,19 +158,20 @@ class TemperatureControllerClass(threading.Thread):
 					packet.buildpacket()
 					UART.write(packet.tostruct() )
 
-			print "EITI firmware  (rev %d)" % ((memory[PLC_REG_EITI_STATUS] & 0xFF00) >> 8)
-			if (memory[PLC_REG_EITI_STATUS] & 0x0003):
-				print "RTD temperature:   N/A C"
-			else:
-				print "RTD temperature:   %.1f C" % (float( memory[PLC_REG_RTD]) / 10)
-			if (memory[PLC_REG_EITI_STATUS] & 0x000C):
-				print "TCPL temperature:  N/A C"
-			else:
-				print "TCPL temperature:  %.1f C" % (float( memory[PLC_REG_TCPL]) / 10)
-			print "Board temperature: %.1f C" % (float( memory[PLC_REG_BOARD_TEMP]) / 10)
-			print "Current loop receiver:    %.2f mA" % (float( memory[PLC_REG_CLP_RX]) / 1000)
-			print "Current loop transmitter: %.2f mA" % (float( memory[PLC_REG_CLP_TX]) / 1000)
-			print "12v power supply: ", "ENABLED"
+#			print "\n\n"
+			#print "EITI firmware  (rev %d)" % ((memory[PLC_REG_EITI_STATUS] & 0xFF00) >> 8)
+			#if (memory[PLC_REG_EITI_STATUS] & 0x0003):
+				#print "RTD temperature:   N/A C"
+			#else:
+				#print "RTD temperature:   %.1f C" % (float( memory[PLC_REG_RTD]) / 10)
+			#if (memory[PLC_REG_EITI_STATUS] & 0x000C):
+				#print "TCPL temperature:  N/A C"
+			#else:
+				#print "TCPL temperature:  %.1f C" % (float( memory[PLC_REG_TCPL]) / 10)
+			#print "Board temperature: %.1f C" % (float( memory[PLC_REG_BOARD_TEMP]) / 10)
+			#print "Current loop receiver:    %.2f mA" % (float( memory[PLC_REG_CLP_RX]) / 1000)
+			#print "Current loop transmitter: %.2f mA" % (float( memory[PLC_REG_CLP_TX]) / 1000)
+			#print "12v power supply: ", "ENABLED"
 			
 			if SHOW_ERROR_CODES:
 				if (memory[PLC_REG_EITI_STATUS] & 0x0001):
@@ -191,7 +191,6 @@ class TemperatureControllerClass(threading.Thread):
 				if (memory[PLC_REG_EITI_STATUS] & 0x00080):
 					print "Warning: 4-20mA loop is receiving more than 20mA"
 			
-			print "\n\n"
 			
 			if counter == 300:
 				print 'Iterated 300 times, now exiting gracefully'
@@ -284,25 +283,24 @@ TX_line.set_antialiased(True)
 
 
 def update_plots():
-	time = 1
-
+	global i
 	if (memory[PLC_REG_EITI_STATUS] & 0x0003):
-		RTD_temperature[time]  = RTD_temperature[time-1]
+		RTD_temperature[i]  = RTD_temperature[i-1]
 		RTD_label.set("N/A")
 	else:
-		RTD_temperature[time]  = float( memory[PLC_REG_RTD]) / 10
-		RTD_label.set(RTD_temperature[time])
+		RTD_temperature[i]  = float( memory[PLC_REG_RTD]) / 10
+		RTD_label.set(RTD_temperature[i])
 
 	if (memory[PLC_REG_EITI_STATUS] & 0x000C):
-		TCPL_temperature[time] = TCPL_temperature[time-1]
+		TCPL_temperature[i] = TCPL_temperature[i-1]
 		TCPL_label.set("N/A")
 	else:
-		TCPL_temperature[time] = float( memory[PLC_REG_TCPL]) / 10
-		TCPL_label.set(TCPL_temperature[time])
+		TCPL_temperature[i] = float( memory[PLC_REG_TCPL]) / 10
+		TCPL_label.set(TCPL_temperature[i])
 		
 	memory[PLC_REG_CLP_TX] = int(float(TX_current.get()) * 1000)
-	current_loop_RX[time]  = float( memory[PLC_REG_CLP_RX]) / 1000
-	current_loop_TX[time]  = float( memory[PLC_REG_CLP_TX]) / 1000
+	current_loop_RX[i]  = float( memory[PLC_REG_CLP_RX]) / 1000
+	current_loop_TX[i]  = float( memory[PLC_REG_CLP_TX]) / 1000
 	EITI_status         = 40
 
 	# Plot the data
@@ -310,11 +308,11 @@ def update_plots():
 	TCPL_line.set_ydata(TCPL_temperature)
 	RX_line.set_ydata(current_loop_RX)
 	TX_line.set_ydata(current_loop_TX)
-	#f.canvas.draw()     
+	f.canvas.draw()
 	
-	table = [ RTD_temperature[time], TCPL_temperature[time], current_loop_RX[time], current_loop_TX[time], EITI_status]
+	table = [ RTD_temperature[i], TCPL_temperature[i], current_loop_RX[i], current_loop_TX[i], EITI_status]
 	writer.writerow(table)
-	time = time +1
+	i = i +1
 	root.after(500, update_plots)
 
 
