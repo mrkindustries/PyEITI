@@ -1,9 +1,11 @@
 from crc_16 import crc16
 from matplotlib.pylab import *
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
+from Tkinter import *
 from time import sleep
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.pyplot import *
 
 import time
 import array
@@ -25,7 +27,7 @@ FUNCTION_READ_INPUT_REGISTER = 4
 
 # Internal memory, jusy like a PLC
 memory = [0] * 25000
-
+time = 1
 #EITI stuff
 PLC_REG_RTD = 0x0540
 PLC_REG_TCPL = 0x0541
@@ -205,8 +207,8 @@ class TemperatureControllerClass(threading.Thread):
 def destroy(e): sys.exit()
 
 
-#t = TemperatureControllerClass()
-#t.start()
+t = TemperatureControllerClass()
+t.start()
 
 
 root = Tk.Tk()
@@ -215,10 +217,25 @@ root.minsize(300,300)
 root.geometry("700x500")
 root.geometry("+300+100")
 
+TX_current = StringVar()
+TX_current.set("4.0")
 L1 = Tk.Label(root, text="TX current")
 L1.pack( side = Tk.RIGHT)
-E1 = Tk.Entry(root, background = 'white')
-E1.pack(side = Tk.RIGHT)
+TX_current_entry = Tk.Entry(root, textvariable = TX_current, background = 'white')
+TX_current_entry.pack(side = Tk.RIGHT)
+
+TCPL_label = StringVar()
+TCPL_label.set("N/A")
+
+TCPL_label_frame = Label( root, textvariable=TCPL_label)
+TCPL_label_frame.pack(side = Tk.RIGHT)
+
+RTD_label = StringVar()
+RTD_label.set("N/A")
+
+RTD_label_frame = Label( root, textvariable=RTD_label)
+RTD_label_frame.pack(side = Tk.RIGHT)
+
 
 f = Figure(figsize=(30,30), dpi=80)
 temperature_plt = f.add_subplot(211)
@@ -244,9 +261,6 @@ TCPL_temperature = 0 * x
 current_loop_RX  = 0 * x
 current_loop_TX  = 0 * x
 
-#plt.figure().patch.set_facecolor('white')
-
-#plt.subplot(211)
 f.patch.set_facecolor('white')
 temperature_plt.set_title('EITI interfaces')
 temperature_plt.set_xlabel('Time [sec]')
@@ -268,30 +282,44 @@ RX_line.set_antialiased(True)
 TX_line.set_antialiased(True)
 
 
-root.mainloop()
 
-for i in range(1,20):
-	sleep (0.5)
+def update_plots():
+	time = 1
+
 	if (memory[PLC_REG_EITI_STATUS] & 0x0003):
-		RTD_temperature[i]  = RTD_temperature[i-1]
+		RTD_temperature[time]  = RTD_temperature[time-1]
+		RTD_label.set("N/A")
 	else:
-		RTD_temperature[i]  = float( memory[PLC_REG_RTD]) / 10
+		RTD_temperature[time]  = float( memory[PLC_REG_RTD]) / 10
+		RTD_label.set(RTD_temperature[time])
+
 	if (memory[PLC_REG_EITI_STATUS] & 0x000C):
-		TCPL_temperature[i] = TCPL_temperature[i-1]
+		TCPL_temperature[time] = TCPL_temperature[time-1]
+		TCPL_label.set("N/A")
 	else:
-		TCPL_temperature[i] = float( memory[PLC_REG_TCPL]) / 10
-	current_loop_RX[i]  = float( memory[PLC_REG_CLP_RX]) / 1000
-	current_loop_TX[i]  = float( memory[PLC_REG_CLP_TX]) / 1000
+		TCPL_temperature[time] = float( memory[PLC_REG_TCPL]) / 10
+		TCPL_label.set(TCPL_temperature[time])
+		
+	memory[PLC_REG_CLP_TX] = int(float(TX_current.get()) * 1000)
+	current_loop_RX[time]  = float( memory[PLC_REG_CLP_RX]) / 1000
+	current_loop_TX[time]  = float( memory[PLC_REG_CLP_TX]) / 1000
 	EITI_status         = 40
-	
+
 	# Plot the data
 	RTD_line.set_ydata(RTD_temperature)
 	TCPL_line.set_ydata(TCPL_temperature)
 	RX_line.set_ydata(current_loop_RX)
 	TX_line.set_ydata(current_loop_TX)
-	draw()     
+	#f.canvas.draw()     
 	
-	table = [ RTD_temperature[i], TCPL_temperature[i], current_loop_RX[i], current_loop_TX[i], EITI_status]
+	table = [ RTD_temperature[time], TCPL_temperature[time], current_loop_RX[time], current_loop_TX[time], EITI_status]
 	writer.writerow(table)
-#t.exit()
+	time = time +1
+	root.after(500, update_plots)
+
+
+root.after(500, update_plots)
+root.mainloop()
+
+t.exit()
 exit()
