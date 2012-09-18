@@ -213,15 +213,8 @@ t.start()
 root = Tk.Tk()
 root.wm_title("EITI")
 root.minsize(300,300)
-root.geometry("750x500")
+root.geometry("750x490")
 root.geometry("+300+100")
-
-TX_current = StringVar()
-TX_current.set("4.0")
-L1 = Tk.Label(root, text="TX current (mA)", justify=LEFT, font=("DejaVu Sans", 9))
-L1.grid( row = 0, column = 4)
-TX_current_entry = Tk.Entry(root, textvariable = TX_current, background = 'white')
-TX_current_entry.grid( row = 0, column = 5)
 
 L2 = Tk.Label(root, text="TCPL temperature:", font=("DejaVu Sans", 9))
 L2.grid( row = 1, column = 4)
@@ -237,6 +230,27 @@ RTD_label.set("N/A")
 RTD_label_frame = Label( root, textvariable=RTD_label)
 RTD_label_frame.grid( row = 2, column = 5)
 
+L3 = Tk.Label(root, text="Board temperature:", font=("DejaVu Sans", 9))
+L3.grid( row = 3, column = 4)
+board_temp_label = StringVar()
+board_temp_label.set("N/A")
+board_temp_label_frame = Label( root, textvariable=board_temp_label)
+board_temp_label_frame.grid( row = 3, column = 5)
+
+
+L4 = Tk.Label(root, text="4-20mA RX:", font=("DejaVu Sans", 9))
+L4.grid( row = 4, column = 4)
+RX_current_label = StringVar()
+RX_current_label.set("N/A")
+RX_current_label_frame = Label( root, textvariable=RX_current_label)
+RX_current_label_frame.grid( row = 4, column = 5)
+
+TX_current = StringVar()
+TX_current.set("4.0")
+L1 = Tk.Label(root, text="TX current (mA)", justify=LEFT, font=("DejaVu Sans", 9))
+L1.grid( row = 5, column = 4)
+TX_current_entry = Tk.Entry(root, textvariable = TX_current, background = 'white')
+TX_current_entry.grid( row = 5, column = 5)
 
 f = Figure(figsize=(6,6), dpi=80)
 temperature_plt = f.add_subplot(211)
@@ -286,6 +300,11 @@ TX_line.set_antialiased(True)
 
 def update_plots():
 	global i
+	memory[PLC_REG_CLP_TX] = int(float(TX_current.get()) * 1000)
+	current_loop_RX[i]  = float( memory[PLC_REG_CLP_RX]/10) / 100
+	current_loop_TX[i]  = float( memory[PLC_REG_CLP_TX]) / 1000
+	EITI_status         = 40
+	
 	if (memory[PLC_REG_EITI_STATUS] & 0x0003):
 		RTD_temperature[i]  = RTD_temperature[i-1]
 		RTD_label.set("N/A")
@@ -299,11 +318,10 @@ def update_plots():
 	else:
 		TCPL_temperature[i] = float( memory[PLC_REG_TCPL]) / 10
 		TCPL_label.set(TCPL_temperature[i])
-		
-	memory[PLC_REG_CLP_TX] = int(float(TX_current.get()) * 1000)
-	current_loop_RX[i]  = float( memory[PLC_REG_CLP_RX]) / 1000
-	current_loop_TX[i]  = float( memory[PLC_REG_CLP_TX]) / 1000
-	EITI_status         = 40
+	board_temp_label.set( float( memory[PLC_REG_BOARD_TEMP]) / 10)
+	RX_current_label.set(current_loop_RX[i])
+	
+
 
 	# Plot the data
 	RTD_line.set_ydata(RTD_temperature)
@@ -315,7 +333,7 @@ def update_plots():
 	table = [ RTD_temperature[i], TCPL_temperature[i], current_loop_RX[i], current_loop_TX[i], EITI_status]
 	writer.writerow(table)
 	i = i +1
-	root.after(500, update_plots)
+	root.after(250, update_plots)
 
 
 root.after(500, update_plots)
